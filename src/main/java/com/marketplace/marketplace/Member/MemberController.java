@@ -4,7 +4,6 @@ import org.springframework.web.bind.annotation.RestController;
 
 import jakarta.servlet.http.HttpSession;
 
-import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
@@ -19,14 +18,25 @@ import org.springframework.web.bind.annotation.PostMapping;
 @RequestMapping("/api")
 public class MemberController {
 
+    private final MemberService memberService;
+    private final HttpSession session;
+
+    public MemberController(MemberService memberService, HttpSession session) {
+        this.memberService = memberService;
+        this.session = session;
+    }
+
     @PostMapping("/login")
-    public ResponseEntity<?> login(@RequestBody MemberEntity member, HttpSession session) {
-        UUID uid = Optional.ofNullable(UUID.class.cast(session.getAttribute("uid")))
-                .orElse(UUID.randomUUID());
-        session.setAttribute("uid", uid);
-        Map<String, Object> map = new HashMap<>();
-        map.put("Status", HttpStatus.OK);
-        map.put("Message", "로그인 성공");
+    public ResponseEntity<?> login(@RequestBody MemberEntity member) {
+
+        Map<String, Object> map = memberService.isMember(member);
+
+        if (map.get("Status").equals(HttpStatus.OK)) {
+            UUID uid = Optional.ofNullable(UUID.class.cast(session.getAttribute("uid")))
+                    .orElse(UUID.randomUUID());
+            session.setAttribute("uid", uid);
+        }
+
         return new ResponseEntity<>(map, HttpStatus.OK);
     }
 
